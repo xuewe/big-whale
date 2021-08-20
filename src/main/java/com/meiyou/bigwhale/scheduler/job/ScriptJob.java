@@ -4,6 +4,7 @@ import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
+import com.alibaba.fastjson.JSON;
 import com.meiyou.bigwhale.common.Constant;
 import com.meiyou.bigwhale.common.pojo.HttpYarnApp;
 import com.meiyou.bigwhale.config.SshConfig;
@@ -90,12 +91,13 @@ public class ScriptJob extends AbstractRetryable implements InterruptableJob {
         }
         String command = scriptHistory.getContent();
         try {
-           if (Constant.ScriptType.SHELL.equals(scriptHistory.getScriptType())) {
-               runCommonShell(command);
-           } else {
-               runYarnShell(command);
-           }
+            if (Constant.ScriptType.SHELL.equals(scriptHistory.getScriptType())) {
+                runCommonShell(command);
+            } else {
+                runYarnShell(command);
+            }
         } catch (Exception e) {
+            System.out.println("error:"+e);
             if (interrupted) {
                 dealInterrupted();
                 return;
@@ -123,7 +125,7 @@ public class ScriptJob extends AbstractRetryable implements InterruptableJob {
             conn.connect(null, sshConfig.getConnectTimeout(), 30000);
             conn.authenticateWithPassword(sshConfig.getUser(), sshConfig.getPassword());
             session = conn.openSession();
-            session.execCommand("echo time mark: $(date +%s) && " + command);
+            session.execCommand("source /etc/profile && echo time mark: $(date +%s) && " + command);
             if (!interrupted) {
                 //并发执行读取
                 readOutput(session);
@@ -135,9 +137,16 @@ public class ScriptJob extends AbstractRetryable implements InterruptableJob {
                 session.waitForCondition(ChannelCondition.EXIT_STATUS, 1000);
                 //取得指令执行结束后的状态
                 int ret = session.getExitStatus();
+                System.out.println("退出状态"+ret);
                 if (ret == 0) {
                     scriptHistory.updateState(Constant.JobState.SUBMITTED);
-                    Matcher matcher = YARN_PATTERN.matcher(scriptHistory.getOutputs());
+                    System.out.println("option==="+JSON.toJSONString(scriptHistory));
+                    Matcher matcher=null;
+                    if (!scriptHistory.getOutputs().contains("application_")){
+                        matcher = YARN_PATTERN.matcher(scriptHistory.getErrors());
+                    }else{
+                        matcher = YARN_PATTERN.matcher(scriptHistory.getOutputs());
+                    }
                     if (matcher.find()) {
                         String id = matcher.group();
                         scriptHistory.setJobId(id);
@@ -146,11 +155,13 @@ public class ScriptJob extends AbstractRetryable implements InterruptableJob {
                     }
                     scriptHistory.setJobFinalStatus("UNDEFINED");
                 } else {
+                    System.out.println("scr:"+Constant.JobState.FAILED);
                     scriptHistory.updateState(Constant.JobState.FAILED);
                     scriptHistory.setFinishTime(new Date());
                 }
                 scriptHistoryService.save(scriptHistory);
                 if (ret != 0) {
+                    System.out.println("hiserror:"+Constant.ErrorType.FAILED);
                     //重试
                     retryCurrentNode(scriptHistory, Constant.ErrorType.FAILED);
                 }
@@ -180,7 +191,7 @@ public class ScriptJob extends AbstractRetryable implements InterruptableJob {
             conn.connect(null, sshConfig.getConnectTimeout(), 30000);
             conn.authenticateWithPassword(sshConfig.getUser(), sshConfig.getPassword());
             session = conn.openSession();
-            session.execCommand("echo time mark: $(date +%s) && " + command);
+            session.execCommand("source /etc/profile && echo time mark: $(date +%s) && " + command);
             if (!interrupted) {
                 scriptHistory.updateState(Constant.JobState.SUBMITTED);
                 scriptHistory.updateState(Constant.JobState.ACCEPTED);
@@ -200,11 +211,14 @@ public class ScriptJob extends AbstractRetryable implements InterruptableJob {
                 if (ret == 0) {
                     scriptHistory.updateState(Constant.JobState.SUCCEEDED);
                 } else {
+                    System.out.println("failed:"+Constant.JobState.FAILED);
                     scriptHistory.updateState(Constant.JobState.FAILED);
                 }
                 scriptHistory.setFinishTime(new Date());
                 scriptHistoryService.save(scriptHistory);
                 if (ret != 0) {
+                    System.out.println("reterror:"+Constant.ErrorType.FAILED);
+
                     //重试
                     retryCurrentNode(scriptHistory, Constant.ErrorType.FAILED);
                 }
@@ -292,6 +306,7 @@ public class ScriptJob extends AbstractRetryable implements InterruptableJob {
                 Cluster cluster = clusterService.findById(scriptHistory.getClusterId());
                 String [] jobParams = scriptHistory.getJobParams().split(";");
                 HttpYarnApp httpYarnApp = YarnApiUtils.getActiveApp(cluster.getYarnUrl(), jobParams[0], jobParams[1], jobParams[2], 3);
+                System.out.println("===="+JSON.toJSONString(httpYarnApp));
                 if (httpYarnApp != null) {
                     scriptHistory.updateState(Constant.JobState.SUBMITTED);
                     scriptHistory.setJobFinalStatus("UNDEFINED");

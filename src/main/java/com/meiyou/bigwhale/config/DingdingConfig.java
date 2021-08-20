@@ -15,7 +15,7 @@ public class DingdingConfig {
     /**
      * 是否启用钉钉消息通知
      */
-    private boolean enabled = false;
+    private boolean enabled = true;
     /**
      * 公共频道监控
      */

@@ -1,5 +1,6 @@
 package com.meiyou.bigwhale.scheduler.monitor;
 
+import com.alibaba.fastjson.JSON;
 import com.meiyou.bigwhale.common.Constant;
 import com.meiyou.bigwhale.common.pojo.BackpressureInfo;
 import com.meiyou.bigwhale.entity.Cluster;
@@ -14,6 +15,8 @@ import com.meiyou.bigwhale.util.YarnApiUtils;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -57,14 +60,12 @@ public class StreamJobMonitor extends AbstractNoticeable implements Interruptabl
         monitor.setRealFireTime(jobExecutionContext.getFireTime());
         monitorService.save(monitor);
         script = scriptService.findOneByQuery("monitorId=" + monitorId);
+        System.out.println("==="+ JSON.toJSONString(script));
         scriptHistory = scriptHistoryService.findScriptLatest(script.getId());
+        System.out.println("==="+ JSON.toJSONString(scriptHistory));
         if (scriptHistory == null) {
             restart();
             return;
-        }
-        // 手动启动的任务，后面才开启的监控，设置一下监控ID
-        if (scriptHistory.getMonitorId() == null) {
-            scriptHistory.setMonitorId(monitorId);
         }
         if (Constant.JobState.SUBMIT_WAIT.equals(scriptHistory.getState()) ||
                 Constant.JobState.SUBMITTING.equals(scriptHistory.getState())) {
@@ -127,6 +128,8 @@ public class StreamJobMonitor extends AbstractNoticeable implements Interruptabl
     private void monitorFlinkStream() {
         if (scriptHistory.isRunning()) {
             boolean exist = YarnApiUtils.existRunningJobs(cluster.getYarnUrl(), scriptHistory.getJobId());
+
+            System.out.println(cluster.getYarnUrl()+"====="+scriptHistory.getJobId());
             if (!exist) {
                 // 五分钟
                 if (System.currentTimeMillis() - scriptHistory.getStartTime().getTime() >= 300000) {

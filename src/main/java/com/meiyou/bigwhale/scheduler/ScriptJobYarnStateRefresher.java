@@ -64,6 +64,7 @@ public class ScriptJobYarnStateRefresher extends AbstractRetryable implements In
             });
             Set<Integer> matchIds = new HashSet<>();
             for (HttpYarnApp httpYarnApp : httpYarnApps) {
+
                 String key = httpYarnApp.getUser() + ";" + httpYarnApp.getQueue() + ";" + httpYarnApp.getName();
                 if (!yarnParamsToScriptHistoryMap.containsKey(key)) {
                     continue;
@@ -112,7 +113,8 @@ public class ScriptJobYarnStateRefresher extends AbstractRetryable implements In
             scriptHistory.setJobId(httpYarnApp.getId());
             scriptHistory.setJobUrl(httpYarnApp.getTrackingUrl());
             scriptHistory.setJobFinalStatus(httpYarnApp.getFinalStatus());
-        } else {
+        }else {
+            System.out.println("UNKNOWN:"+Constant.JobState.FAILED);
             scriptHistory.updateState(Constant.JobState.FAILED);
             scriptHistory.setFinishTime(new Date());
             scriptHistory.setJobFinalStatus("UNKNOWN");

@@ -96,6 +96,7 @@ public class ScheduleJobPreparer implements Job {
         // 判断最后一次记录
         ScriptHistory lastScriptHistory = scriptHistories.get(0);
         if (!lastScriptHistory.getScheduleRunnable()) {
+            System.out.println("last:"+Constant.JobState.FAILED);
             return Constant.JobState.FAILED;
         }
         if (Constant.JobState.UN_CONFIRMED_.equals(lastScriptHistory.getState()) || lastScriptHistory.isRunning()) {
@@ -104,6 +105,7 @@ public class ScheduleJobPreparer implements Job {
         if (Constant.JobState.SUCCEEDED.equals(lastScriptHistory.getState())) {
             return Constant.JobState.SUCCEEDED;
         }
+        System.out.println("return:"+Constant.JobState.FAILED);
         return Constant.JobState.FAILED;
     }
 

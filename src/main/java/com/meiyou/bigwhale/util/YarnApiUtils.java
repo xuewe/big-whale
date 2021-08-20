@@ -88,6 +88,7 @@ public class YarnApiUtils {
         if (queue != null && !"root".equals(queue) && !queue.startsWith("root.")) {
             queue = "root." + queue;
         }
+
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);
         params.put("states", "finished,killed,failed");
@@ -101,7 +102,7 @@ public class YarnApiUtils {
                     return Long.compare(time2, time1);
                 });
                 for (HttpYarnApp httpYarnApp : appList) {
-                    if (httpYarnApp.getQueue().equals(queue) && httpYarnApp.getName().equals(name)) {
+                        if (httpYarnApp.getQueue().equals(queue) && httpYarnApp.getName().equals(name)) {
                         return httpYarnApp;
                     }
                 }

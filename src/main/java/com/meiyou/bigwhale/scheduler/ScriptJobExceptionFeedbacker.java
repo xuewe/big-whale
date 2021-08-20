@@ -73,6 +73,7 @@ public class ScriptJobExceptionFeedbacker extends AbstractRetryable implements J
                         continue;
                     }
                 }
+                System.out.println("finish:"+Constant.JobState.FAILED);
                 scriptHistory.updateState(Constant.JobState.FAILED);
                 scriptHistory.setErrors(scriptHistory.getErrors() != null ? scriptHistory.getErrors() + "\nServer unexpected exit" : "Server unexpected exit");
                 scriptHistory.setFinishTime(new Date());
