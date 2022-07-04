@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Big Whale
 巨鲸任务调度平台为美柚大数据研发的分布式计算任务调度系统，提供Spark、Flink等批处理任务的DAG调度和流处理任务的运行管理和状态监控，并具有Yarn应用管理、重复应用检测、大内存应用检测等功能。
 服务基于Spring Boot 2.0开发，打包后即可运行。[[Github]](https://github.com/MeetYouDevs/big-whale)[[Gitee]](https://gitee.com/meetyoucrop/big-whale)
@@ -128,3 +129,8 @@
 * v1.3调度引擎进行重构升级，不支持从旧版本升级上来，原有旧版本的任务请手动进行迁移，离线调度移除“Python”类型脚本支持
 # License
 The project is licensed under the [Apache 2 license](https://github.com/MeetYouDevs/big-whale/blob/master/LICENSE).
+=======
+# big-whale
+
+大数据任务提交部署监控平台
+>>>>>>> a53699c53e157b2bb2b1e0efd4b6bdaef2c00daa
